@@ -19,7 +19,8 @@ def __main__():
         print("1. Get servers")
         print("2. Get invites")
         print("3. Search messages")
-        print("4. Exit")
+        print("4. Get total messages")
+        print("5. Exit")
         choice = input("Enter a choice: ")
         if choice == '1':
             print("\nIn order of creation: ")
@@ -44,6 +45,10 @@ def __main__():
             print(f"\nFound {len(messages)} messages sent by you")
             print("")
         elif choice == '4':
+            print(f"\nTotal messages sent by you in this data package: {total_messages()}")
+            print("")
+        elif choice == '5':
+            os.system('cls' if os.name == 'nt' else 'clear')
             break
         else:
             print("Invalid choice")
@@ -125,6 +130,18 @@ def search_messages(search_term):
     sorted_messages = [msg[1] for msg in messages]
     return sorted_messages
 
+
+def total_messages():
+    total = 0
+    for channel_dir in os.listdir('package/messages'):
+        channel_path = os.path.join('package/messages', channel_dir)
+        if os.path.isdir(channel_path):
+            for file_name in os.listdir(channel_path):
+                file_path = os.path.join(channel_path, file_name)
+                if file_name == 'messages.csv':
+                    with open(file_path, 'r', encoding='utf-8') as file:
+                        total += sum(1 for line in file)
+    return total
 
 if __name__ == '__main__':
     __main__()
