@@ -1,4 +1,5 @@
-import os, json, re, requests
+import os, json, re
+from datetime import datetime
 
 def __main__():
     user_info = get_user_info()
@@ -23,19 +24,31 @@ def __main__():
         if choice == '1':
             print("\nIn order of creation: ")
             print("\n".join(servers))
+            print(f"\nFound {len(servers)} servers you are in")
             print("")
         elif choice == '2':
-            print("\n".join(invites))
+            print("\nAll server invites you have sent: ")
+
+            for i in range(0, len(invites), 10):
+                # use max to avoid slicing out of range
+                print(f"\nDisplaying invites {i+1} to {min(i+10, len(invites))} of {len(invites)}:")
+                print("\n".join(invites[i:i+10]))
+
+
+            print(f"\nFound {len(invites)} invites sent by you")
+            print("")
         elif choice == '3':
             print()
             messages = search_messages_menu()
             print("\n\n".join(messages))
-            print(f"\nFound {len(messages)} messages")
+            print(f"\nFound {len(messages)} messages sent by you")
+            print("")
         elif choice == '4':
             break
         else:
             print("Invalid choice")
         input("Press enter to continue...")
+        os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def get_user_info():
@@ -77,7 +90,7 @@ def get_server_invites():
 def extract_invite_link(line):
     match = re.search(r'https?://discord\.gg/[^\s,]+', line)
     if match:
-        return match.group(0).rstrip(',')
+        return match.group(0).rstrip(',').rstrip('"')
     return None
 
 
@@ -101,13 +114,16 @@ def search_messages(search_term):
                 if file_name == 'messages.csv':
                     with open(file_path, 'r', encoding='utf-8') as file:
                         for line in file:
-                            if search_term in line:
+                            if search_term.lower() in line.lower():
                                 parts = line.strip().split(',', 2)
-                                if len(parts) >= 3 and len(parts[1].split()) >= 2:  # Check if there are at least 3 parts and date/time split is valid
+                                if len(parts) >= 3 and len(parts[1].split()) >= 2:
                                     date_time = f"\033[1;30m{parts[1].split()[0]} - {parts[1].split()[1][:8]}\033[0m"
-                                    message = parts[2].strip().rstrip(',')  # Remove trailing comma
-                                    messages.append(f"{date_time} - {message}")
-    return messages
+                                    message = parts[2].strip().rstrip(',')
+                                    messages.append((parts[1], f"{date_time} - {message}"))
+
+    messages.sort(key=lambda x: x[0])
+    sorted_messages = [msg[1] for msg in messages]
+    return sorted_messages
 
 
 if __name__ == '__main__':
