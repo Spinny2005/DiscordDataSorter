@@ -4,6 +4,20 @@ from datetime import datetime
 def __main__():
     user_info = get_user_info()
     os.system('cls' if os.name == 'nt' else 'clear')
+    print("██████╗░██╗░██████╗░█████╗░░█████╗░██████╗░██████╗░  ██████╗░░█████╗░████████╗░█████╗░")
+    print("██╔══██╗██║██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔══██╗  ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗")
+    print("██║░░██║██║╚█████╗░██║░░╚═╝██║░░██║██████╔╝██║░░██║  ██║░░██║███████║░░░██║░░░███████║")
+    print("██║░░██║██║░╚═══██╗██║░░██╗██║░░██║██╔══██╗██║░░██║  ██║░░██║██╔══██║░░░██║░░░██╔══██║")
+    print("██████╔╝██║██████╔╝╚█████╔╝╚█████╔╝██║░░██║██████╔╝  ██████╔╝██║░░██║░░░██║░░░██║░░██║")
+    print("╚═════╝░╚═╝╚═════╝░░╚════╝░░╚════╝░╚═╝░░╚═╝╚═════╝░  ╚═════╝░╚═╝░░╚═╝░░░╚═╝░░░╚═╝░░╚═╝")
+    print()
+    print("░██████╗░█████╗░██████╗░████████╗███████╗██████╗░")
+    print("██╔════╝██╔══██╗██╔══██╗╚══██╔══╝██╔════╝██╔══██╗")
+    print("╚█████╗░██║░░██║██████╔╝░░░██║░░░█████╗░░██████╔╝")
+    print("░╚═══██╗██║░░██║██╔══██╗░░░██║░░░██╔══╝░░██╔══██╗")
+    print("██████╔╝╚█████╔╝██║░░██║░░░██║░░░███████╗██║░░██║")
+    print("╚═════╝░░╚════╝░╚═╝░░╚═╝░░░╚═╝░░░╚══════╝╚═╝░░╚═╝")
+    print()
     print("\033[1mMain Menu\033[0m")
     print(f"User: {user_info[0]}")
     print(f"Email: {user_info[1]}")
@@ -91,16 +105,16 @@ def get_server_invites():
     invites_list.sort()
     return invites_list
 
-
 def extract_invite_link(line):
-    match = re.search(r'https?://discord\.gg/[^\s,]+', line)
+    match = re.search(r'https?://(?:www\.)?(?:discord\.gg/[^\s,]+|discord\.com/invite/[^\s,]+)', line)
     if match:
         return match.group(0).rstrip(',').rstrip('"')
     return None
 
-
 def is_valid_invite(invite_link):
     return invite_link is not None
+
+
 
 
 def search_messages_menu():
