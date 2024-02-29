@@ -104,12 +104,17 @@ def is_valid_invite(invite_link):
 
 
 def search_messages_menu():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("Notes: \n - Searching for numbers also returns dates and times. \n - Searching for non alphanumeric characters may return unexpected results. \n - Results with over 1000 messages may be truncated.\n\t(If you use VScode the max lines is 1000, cmd is 9999) \n - Some messages may be missing due to impropper csv formatting.\n\t(Blame discord, not me. I ain't trying to work around that shit) \n")
     search_term = input('Enter a search term: ')
     messages = search_messages(search_term)
     return messages
 
 
 def search_messages(search_term):
+    if not search_term:
+        print("No search term entered")
+        return []
     messages = []
     for channel_dir in os.listdir('package/messages'):
         channel_path = os.path.join('package/messages', channel_dir)
