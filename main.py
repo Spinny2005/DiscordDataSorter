@@ -99,6 +99,9 @@ def __main__():
             os.system('cls' if os.name == 'nt' else 'clear')
             break
 
+        elif choice == '7':
+            print("\n".join(search_messages("https://discord.gg/")))
+
         # Invalid choice
         else:
             print("Invalid choice")
@@ -262,20 +265,54 @@ def search_messages(search_term):
         print("No search term entered")
         return []
     messages = []
+
+
     for channel_dir in os.listdir('package/messages'):
         channel_path = os.path.join('package/messages', channel_dir)
+
         if os.path.isdir(channel_path):
             for file_name in os.listdir(channel_path):
                 file_path = os.path.join(channel_path, file_name)
+                # parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"
+
                 if file_name == 'messages.csv':
                     with open(file_path, 'r', encoding='utf-8') as file:
                         for line in file:
+                            # Set up variables
+                            server_name = ""
+                            parts = ""
+                            date_time = ""
+                            message = ""
+
+                            # If the search term is in the line
                             if search_term.lower() in line.lower():
                                 parts = line.strip().split(',', 2)
                                 if len(parts) >= 3 and len(parts[1].split()) >= 2:
                                     date_time = f"\033[1;30m{parts[1].split()[0]} - {parts[1].split()[1][:8]}\033[0m"
                                     message = parts[2].strip().rstrip(',')
-                                    messages.append((parts[1], f"{date_time} - {message}"))
+
+                                # Get the server name
+                                if os.path.exists(os.path.join(channel_path, 'channel.json')):
+                                    with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
+                                        data = json.load(guild_file)
+                                        if data.get('guild'):
+                                            server_name = data['guild']['name']
+                                        else:
+                                            with open('package/messages/index.json', 'r', encoding='utf-8') as index_file:
+                                                index_data = json.load(index_file)
+                                                temp = channel_dir[1:]
+                                                if temp in index_data:
+                                                    server_name = index_data[temp]
+
+                                # Append the message along with the server_name
+                                if date_time != "" and message != "":
+                                    if server_name:
+                                        # messages.append((parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"))
+                                        messages.append(("", f"\033[1;34mMessage sent in {server_name}\033[0m\n{date_time} - {message}"))
+                                    else:
+                                        # messages.append((parts[1], f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {message}"))
+                                        messages.append(("", f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {message}"))
+
 
     messages.sort(key=lambda x: x[0])
     sorted_messages = [msg[1] for msg in messages]
