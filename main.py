@@ -99,8 +99,9 @@ def __main__():
             os.system('cls' if os.name == 'nt' else 'clear')
             break
 
-        elif choice == '7':
-            print("\n".join(search_messages("https://discord.gg/")))
+        elif choice == "69" or choice == "420":
+            print()
+            print("Very funny...")
 
         # Invalid choice
         else:
@@ -251,7 +252,7 @@ def search_messages_menu():
     """
     print("\n")
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("Notes: \n - Searching for numbers also returns dates and times as well as message IDs. \n - Searching for non alphanumeric characters may return unexpected results. \n - Results with over 1000 messages may be truncated.\n\t(If you use VScode the max lines is 1000, cmd is 9999) \n - Some messages may be missing due to impropper csv formatting.\n\t(Blame discord, not me. I ain't trying to work around that shit) \n")
+    print("Notes: \n - Searching for numbers also returns dates and times as well as message IDs. \n - Searching for non alphanumeric characters may return unexpected results. \n - Results with over 1000 messages may be truncated.\n\t(If you use VScode the max messages displayed is 330 cmd is 3330) \n - Some messages may be missing due to impropper csv formatting.\n\t(Blame discord, not me. I ain't trying to work around that shit) \n")
     search_term = input('Enter a search term: ')
     messages = search_messages(search_term)
     return messages
