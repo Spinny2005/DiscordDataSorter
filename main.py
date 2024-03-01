@@ -5,7 +5,7 @@ def __main__():
     user_info = get_user_info()
 
     # Title display
-    print()
+    print("\n")
     os.system('cls' if os.name == 'nt' else 'clear')
     print("██████╗░██╗░██████╗░█████╗░░█████╗░██████╗░██████╗░  ██████╗░░█████╗░████████╗░█████╗░")
     print("██╔══██╗██║██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔══██╗  ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗")
@@ -70,6 +70,10 @@ def __main__():
             valid_invites = get_working_invites()
 
             if valid_invites != []:
+                print("\n")
+                os.system('cls' if os.name == 'nt' else 'clear')
+
+                print("All valid invites have already been found")
                 print("\nValid invites: ")
                 for i in range(0, len(valid_invites), 10):
                     print(f"\nDisplaying invites {i+1} to {min(i+10, len(valid_invites))} of {len(valid_invites)}:")
@@ -91,7 +95,7 @@ def __main__():
 
         # Exit
         elif choice == '6':
-            print()
+            print("\n")
             os.system('cls' if os.name == 'nt' else 'clear')
             break
 
@@ -101,7 +105,7 @@ def __main__():
 
         # Await user input to continue
         input("Press enter to continue...")
-        print()
+        print("\n")
         os.system('cls' if os.name == 'nt' else 'clear')
 
 
@@ -216,7 +220,7 @@ def get_working_invites():
 
         if response.status_code == 429:
             print("Rate limited. Try again later.")
-            print("Wait at least 10 minutes. Discord api rate limits are strict.")
+            print("Wait at least 15 minutes (can last up to an hour). Discord api rate limits are strict.")
             print("The valid codes found so far are saved. You can continue from where you left off later.\n")
 
             if len(valid_codes) > len(data['valid']):
@@ -242,7 +246,7 @@ def search_messages_menu():
     """ 
         Prompts the user for a search term and returns a list of messages containing the search term
     """
-    print()
+    print("\n")
     os.system('cls' if os.name == 'nt' else 'clear')
     print("Notes: \n - Searching for numbers also returns dates and times as well as message IDs. \n - Searching for non alphanumeric characters may return unexpected results. \n - Results with over 1000 messages may be truncated.\n\t(If you use VScode the max lines is 1000, cmd is 9999) \n - Some messages may be missing due to impropper csv formatting.\n\t(Blame discord, not me. I ain't trying to work around that shit) \n")
     search_term = input('Enter a search term: ')
