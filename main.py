@@ -7,6 +7,7 @@ def __main__():
     # Title display
     print("\n")
     os.system('cls' if os.name == 'nt' else 'clear')
+    print("\033[1;34m")
     print("██████╗░██╗░██████╗░█████╗░░█████╗░██████╗░██████╗░  ██████╗░░█████╗░████████╗░█████╗░")
     print("██╔══██╗██║██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔══██╗  ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗")
     print("██║░░██║██║╚█████╗░██║░░╚═╝██║░░██║██████╔╝██║░░██║  ██║░░██║███████║░░░██║░░░███████║")
@@ -20,17 +21,17 @@ def __main__():
     print("░╚═══██╗██║░░██║██╔══██╗░░░██║░░░██╔══╝░░██╔══██╗")
     print("██████╔╝╚█████╔╝██║░░██║░░░██║░░░███████╗██║░░██║")
     print("╚═════╝░░╚════╝░╚═╝░░╚═╝░░░╚═╝░░░╚══════╝╚═╝░░╚═╝")
+    print("\033[0m")
     print("By Spencer Boggs\n")
 
     # Main menu
     print("\033[1mMain Menu\033[0m")
-    print(f"User: {user_info[0]}")
-    print(f"Email: {user_info[1]}")
-    print(f"ID: {user_info[2]}")
-    print(f"IP: {user_info[3]}")
-    print(f"Phone: {user_info[4]}")
+
+    # print a table of the user's data
+    print(f"{'User':<15}  {'Email':<27}  {'ID':<20}  {'IP':<15}  {'Phone':<20}")
+    print(f"{user_info[0]:<15}  {user_info[1]:<27}  {user_info[2]:<20}  {user_info[3]:<15}  {user_info[4]:<20}")
     print("")
-    
+
     # Load server and invite data
     print("Loading data...")
     servers = get_servers()
@@ -45,7 +46,8 @@ def __main__():
         print("3. Get valid invites (slow)")
         print("4. Search messages")
         print("5. Get total messages")
-        print("6. Exit")
+        print("6. Display all messages")
+        print("7. Exit")
         choice = input("Enter a choice: ")
 
         # Get all servers
@@ -54,6 +56,7 @@ def __main__():
             print("\n".join(servers))
             print(f"\nFound {len(servers)} servers you are in")
             print("")
+            input("Press enter to continue...") 
 
         # Get all invites
         elif choice == '2':
@@ -63,6 +66,7 @@ def __main__():
                 print("\n".join(invites[i:i+10]))
             print(f"\nFound {len(invites)} invites sent by you")
             print("")
+            input("Press enter to continue...") 
 
         # Get valid invites
         elif choice == '3':
@@ -79,36 +83,46 @@ def __main__():
                     print(f"\nDisplaying invites {i+1} to {min(i+10, len(valid_invites))} of {len(valid_invites)}:")
                     print("\n".join(valid_invites[i:i+10]))
                 print(f"\nFound {len(valid_invites)} valid invites sent by you")
+            input("Press enter to continue...") 
 
         # Search messages
         elif choice == '4':
-            print()
-            messages = search_messages_menu()
-            print("\n\n".join(messages))
-            print(f"\nFound {len(messages)} messages sent by you")
-            print("")
+            while True:
+                print()
+                messages = search_messages_menu()
+                print("\n\n".join(messages))
+                print(f"\nFound {len(messages)} messages sent by you")
+                print("")
+                choice = input("Type 'e' to exit. Enter to continue: ")
+                if choice == 'e':
+                    break
 
         # Get total messages
         elif choice == '5':
             print(f"\nTotal messages sent by you in this data package: {total_messages()}")
             print("")
+            input("Press enter to continue...") 
+
+        # Display all messages
+        elif choice == '6':
+            display_all_messages()
 
         # Exit
-        elif choice == '6':
+        elif choice == '7':
             print("\n")
             os.system('cls' if os.name == 'nt' else 'clear')
             break
 
+
         elif choice == "69" or choice == "420":
             print()
             print("Very funny...")
+            input("Press enter to continue...") 
 
         # Invalid choice
         else:
             print("Invalid choice")
 
-        # Await user input to continue
-        input("Press enter to continue...")
         print("\n")
         os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -274,7 +288,6 @@ def search_messages(search_term):
         if os.path.isdir(channel_path):
             for file_name in os.listdir(channel_path):
                 file_path = os.path.join(channel_path, file_name)
-                # parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"
 
                 if file_name == 'messages.csv':
                     with open(file_path, 'r', encoding='utf-8') as file:
@@ -297,7 +310,7 @@ def search_messages(search_term):
                                     with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
                                         data = json.load(guild_file)
                                         if data.get('guild'):
-                                            server_name = data['guild']['name']
+                                            server_name = (f"{data['guild']['name']} in {data['name']}")
                                         else:
                                             with open('package/messages/index.json', 'r', encoding='utf-8') as index_file:
                                                 index_data = json.load(index_file)
@@ -315,7 +328,8 @@ def search_messages(search_term):
                                         messages.append(("", f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {message}"))
 
 
-    messages.sort(key=lambda x: x[0])
+    #messages.sort(key=lambda x: x[0])
+    messages.sort(key=lambda x: x[1].split('\n')[1])
     sorted_messages = [msg[1] for msg in messages]
     return sorted_messages
 
@@ -334,6 +348,78 @@ def total_messages():
                     with open(file_path, 'r', encoding='utf-8') as file:
                         total += sum(1 for line in file)
     return total
+
+
+def display_all_messages():
+    """ 
+        Exact same as search_messages_menu but there is no if statement to check if the search matches the search term
+    """
+    print("\n")
+    os.system('cls' if os.name == 'nt' else 'clear')
+    
+    messages = []
+
+    print(f"Compiling {total_messages()} messages...")
+    print("This may take a minute\n")
+
+    for channel_dir in os.listdir('package/messages'):
+        channel_path = os.path.join('package/messages', channel_dir)
+
+        if os.path.isdir(channel_path):
+            for file_name in os.listdir(channel_path):
+                file_path = os.path.join(channel_path, file_name)
+
+                if file_name == 'messages.csv':
+                    with open(file_path, 'r', encoding='utf-8') as file:
+                        for line in file:
+                            # Set up variables
+                            server_name = ""
+                            parts = ""
+                            date_time = ""
+                            message = ""
+
+                            parts = line.strip().split(',', 2)
+                            if len(parts) >= 3 and len(parts[1].split()) >= 2:
+                                date_time = f"\033[1;30m{parts[1].split()[0]} - {parts[1].split()[1][:8]}\033[0m"
+                                message = parts[2].strip().rstrip(',')
+
+                            # Get the server name
+                            if os.path.exists(os.path.join(channel_path, 'channel.json')):
+                                with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
+                                    data = json.load(guild_file)
+                                    if data.get('guild'):
+                                        server_name = (f"{data['guild']['name']} in {data['name']}")
+                                    else:
+                                        with open('package/messages/index.json', 'r', encoding='utf-8') as index_file:
+                                            index_data = json.load(index_file)
+                                            temp = channel_dir[1:]
+                                            if temp in index_data:
+                                                server_name = index_data[temp]
+
+                            # Append the message along with the server_name
+                            if date_time != "" and message != "":
+                                if server_name:
+                                    # messages.append((parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"))
+                                    messages.append(("", f"\033[1;34mMessage sent in {server_name}\033[0m\n{date_time} - {message}"))
+                                else:
+                                    # messages.append((parts[1], f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {message}"))
+                                    messages.append(("", f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {message}"))
+
+    messages.sort(key=lambda x: x[1].split('\n')[1])
+    sorted_messages = [msg[1] for msg in messages]
+
+    # Then we print messages 100 at a time and prompt the user to continue
+    print("\n")
+    print(f"Found {len(sorted_messages)} messages sent by you")
+    print()
+    for i in range(0, len(sorted_messages), 50):
+        print("\n\n".join(sorted_messages[i:i+50]))
+        print(f"\nDisplaying messages {i+1} to {min(i+50, len(sorted_messages))} of {len(sorted_messages)}")
+        print()
+        choice = input("Type 'e' to exit. Enter to continue: ") 
+        if choice == 'e':
+            break
+        os.system('cls' if os.name == 'nt' else 'clear')
 
 
 if __name__ == '__main__':
