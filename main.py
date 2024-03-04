@@ -47,7 +47,8 @@ def __main__():
         print("4. Search messages")
         print("5. Get total messages")
         print("6. Display all messages")
-        print("7. Exit")
+        print("7. Display all messages from unknown servers")
+        print("8. Exit")
         choice = input("Enter a choice: ")
 
         # Get all servers
@@ -107,8 +108,12 @@ def __main__():
         elif choice == '6':
             display_all_messages()
 
-        # Exit
+        # Display all messages from unknown servers
         elif choice == '7':
+            display_all_unknown_messages()
+
+        # Exit
+        elif choice == '9':
             print("\n")
             os.system('cls' if os.name == 'nt' else 'clear')
             break
@@ -420,6 +425,77 @@ def display_all_messages():
         if choice == 'e':
             break
         os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def display_all_unknown_messages():
+    print("\n")
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+    messages = []
+
+    print(f"Sorting through {total_messages()} messages...")
+    print("This may take a minute\n")
+
+    for channel_dir in os.listdir('package/messages'):
+        channel_path = os.path.join('package/messages', channel_dir)
+
+        if os.path.isdir(channel_path):
+            for file_name in os.listdir(channel_path):
+                file_path = os.path.join(channel_path, file_name)
+
+                if file_name == 'messages.csv':
+                    with open(file_path, 'r', encoding='utf-8') as file:
+                        for line in file:
+                            # Set up variables
+                            server_name = ""
+                            parts = ""
+                            date_time = ""
+                            message = ""
+
+                            parts = line.strip().split(',', 2)
+                            if len(parts) >= 3 and len(parts[1].split()) >= 2:
+                                date_time = f"\033[1;30m{parts[1].split()[0]} - {parts[1].split()[1][:8]}\033[0m"
+                                message = parts[2].strip().rstrip(',')
+
+                            # Get the server name
+                            if os.path.exists(os.path.join(channel_path, 'channel.json')):
+                                with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
+                                    data = json.load(guild_file)
+                                    if data.get('guild'):
+                                        server_name = (f"{data['guild']['name']} in {data['name']}")
+                                    else:
+                                        with open('package/messages/index.json', 'r', encoding='utf-8') as index_file:
+                                            index_data = json.load(index_file)
+                                            temp = channel_dir[1:]
+                                            if temp in index_data:
+                                                server_name = index_data[temp]
+
+                            # Append the message along with the server_name
+                            if date_time != "" and message != "":
+                                if not server_name:
+                                    # messages.append((parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"))
+                                    messages.append(("", f"{date_time} - {message}"))
+
+    messages.sort(key=lambda x: x[1])
+    #messages.sort(key=lambda x: x[1].split('\n')[1])
+    sorted_messages = [msg[1] for msg in messages]
+
+    # Then we print messages 100 at a time and prompt the user to continue
+    print("\n")
+    print(f"Found {len(sorted_messages)} messages sent by you in unknown servers")
+    print()
+    
+    for i in range(0, len(sorted_messages), 50):
+        print("")
+        print("\n\n".join(sorted_messages[i:i+50]))
+        print(f"\nDisplaying messages {i+1} to {min(i+50, len(sorted_messages))} of {len(sorted_messages)}")
+        print()
+        choice = input("Type 'e' to exit. Enter to continue: ") 
+        if choice == 'e':
+            break
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+
 
 
 if __name__ == '__main__':
