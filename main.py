@@ -44,11 +44,12 @@ def __main__():
         print("1. Get servers")
         print("2. Get all invites")
         print("3. Get valid invites (slow)")
-        print("4. Search messages")
-        print("5. Get total messages")
+        print("4. Get total messages")
+        print("5. Search messages")
         print("6. Display all messages")
-        print("7. Display all messages from unknown servers")
-        print("8. Exit")
+        print("7. Search messages from unknown servers")
+        print("8. Display all messages from unknown servers")
+        print("9. Exit")
         choice = input("Enter a choice: ")
 
         # Get all servers
@@ -86,8 +87,14 @@ def __main__():
                 print(f"\nFound {len(valid_invites)} valid invites sent by you")
             input("Press enter to continue...") 
 
-        # Search messages
+        # Get total messages
         elif choice == '4':
+            print(f"\nTotal messages sent by you in this data package: {total_messages()}")
+            print("")
+            input("Press enter to continue...") 
+
+        # Search messages
+        elif choice == '5':
             while True:
                 print()
                 messages = search_messages_menu()
@@ -98,18 +105,24 @@ def __main__():
                 if choice == 'e':
                     break
 
-        # Get total messages
-        elif choice == '5':
-            print(f"\nTotal messages sent by you in this data package: {total_messages()}")
-            print("")
-            input("Press enter to continue...") 
-
         # Display all messages
         elif choice == '6':
             display_all_messages()
 
-        # Display all messages from unknown servers
+        # Search messages from unknown servers
         elif choice == '7':
+            while True:
+                print()
+                messages = search_messages_unknown_servers_menu()
+                print("\n\n".join(messages))
+                print(f"\nFound {len(messages)} messages sent by you in unknown servers")
+                print("")
+                choice = input("Type 'e' to exit. Enter to continue: ")
+                if choice == 'e':
+                    break
+
+        # Display all messages from unknown servers
+        elif choice == '8':
             display_all_unknown_messages()
 
         # Exit
@@ -118,7 +131,7 @@ def __main__():
             os.system('cls' if os.name == 'nt' else 'clear')
             break
 
-
+        # Easter eggs
         elif choice == "69" or choice == "420":
             print()
             print("Very funny...")
@@ -427,6 +440,74 @@ def display_all_messages():
         os.system('cls' if os.name == 'nt' else 'clear')
 
 
+def search_messages_unknown_servers_menu():
+    """ 
+        Prompts the user for a search term and returns a list of messages sent from unknown servers containing the search term
+    """
+    print("\n")
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("Notes: \n - Searching for numbers also returns dates and times as well as message IDs. \n - Searching for non alphanumeric characters may return unexpected results. \n - Results with over 1000 messages may be truncated.\n\t(If you use VScode the max messages displayed is 330 cmd is 3330) \n - Some messages may be missing due to impropper csv formatting.\n\t(Blame discord, not me. I ain't trying to work around that) \n")
+    search_term = input('Enter a search term: ')
+    messages = search_messages_unknown_servers(search_term)
+    return messages
+
+
+def search_messages_unknown_servers(search_term):
+    """ 
+        Searches through the messages folder for all messages sent from unknown servers containing search_term  
+    """
+    if not search_term:
+        print("No search term entered")
+        return []
+    messages = []
+
+    for channel_dir in os.listdir('package/messages'):
+        channel_path = os.path.join('package/messages', channel_dir)
+
+        if os.path.isdir(channel_path):
+            for file_name in os.listdir(channel_path):
+                file_path = os.path.join(channel_path, file_name)
+
+                if file_name == 'messages.csv':
+                    with open(file_path, 'r', encoding='utf-8') as file:
+                        for line in file:
+                            # Set up variables
+                            server_name = ""
+                            parts = ""
+                            date_time = ""
+                            message = ""
+
+                            # If the search term is in the line
+                            if search_term.lower() in line.lower():
+                                parts = line.strip().split(',', 2)
+                                if len(parts) >= 3 and len(parts[1].split()) >= 2:
+                                    date_time = f"\033[1;30m{parts[1].split()[0]} - {parts[1].split()[1][:8]}\033[0m"
+                                    message = parts[2].strip().rstrip(',')
+
+                                # Get the server name
+                                if os.path.exists(os.path.join(channel_path, 'channel.json')):
+                                    with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
+                                        data = json.load(guild_file)
+                                        if data.get('guild'):
+                                            server_name = (f"{data['guild']['name']} in {data['name']}")
+                                        else:
+                                            with open('package/messages/index.json', 'r', encoding='utf-8') as index_file:
+                                                index_data = json.load(index_file)
+                                                temp = channel_dir[1:]
+                                                if temp in index_data:
+                                                    server_name = index_data[temp]
+
+                                # Append the message along with the server_name
+                                if date_time != "" and message != "":
+                                    if not server_name:
+                                        # messages.append((parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"))
+                                        messages.append(("", f"{date_time} - {message}"))
+
+    messages.sort(key=lambda x: x[1])
+    sorted_messages = [msg[1] for msg in messages]
+    return sorted_messages
+
+
 def display_all_unknown_messages():
     print("\n")
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -494,8 +575,6 @@ def display_all_unknown_messages():
         if choice == 'e':
             break
         os.system('cls' if os.name == 'nt' else 'clear')
-
-
 
 
 if __name__ == '__main__':
