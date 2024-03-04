@@ -426,13 +426,29 @@ def display_all_messages():
     messages.sort(key=lambda x: x[1].split('\n')[1])
     sorted_messages = [msg[1] for msg in messages]
 
+    num_per_page = None
+    while not num_per_page:
+        try:
+            num_per_page = int(input("Enter the number of messages to display per page: "))
+        except ValueError:
+            print("Invalid input")
+        if num_per_page < 1:
+            print("Invalid input")
+            num_per_page = None
+        if num_per_page > 1000:
+            if num_per_page > len(sorted_messages) and len(sorted_messages) < 1000:
+                print(f"Max messages per page is {len(sorted_messages)}")
+            else:
+                print("Max messages per page is 1000")
+            num_per_page = None
+
     # Then we print messages 100 at a time and prompt the user to continue
     print("\n")
     print(f"Found {len(sorted_messages)} messages sent by you")
     print()
-    for i in range(0, len(sorted_messages), 50):
-        print("\n\n".join(sorted_messages[i:i+50]))
-        print(f"\nDisplaying messages {i+1} to {min(i+50, len(sorted_messages))} of {len(sorted_messages)}")
+    for i in range(0, len(sorted_messages), num_per_page):
+        print("\n\n".join(sorted_messages[i:i+num_per_page]))
+        print(f"\nDisplaying messages {i+1} to {min(i+num_per_page, len(sorted_messages))} of {len(sorted_messages)}")
         print()
         choice = input("Type 'e' to exit. Enter to continue: ") 
         if choice == 'e':
@@ -565,11 +581,27 @@ def display_all_unknown_messages():
     print("\n")
     print(f"Found {len(sorted_messages)} messages sent by you in unknown servers")
     print()
+
+    num_per_page = None
+    while not num_per_page:
+        try:
+            num_per_page = int(input("Enter the number of messages to display per page: "))
+        except ValueError:
+            print("Invalid input")
+        if num_per_page < 1:
+            print("Invalid input")
+            num_per_page = None
+        if num_per_page > 1000:
+            if num_per_page > len(sorted_messages) and len(sorted_messages) < 1000:
+                print(f"Max messages per page is {len(sorted_messages)}")
+            else:
+                print("Max messages per page is 1000")
+            num_per_page = None
     
-    for i in range(0, len(sorted_messages), 50):
+    for i in range(0, len(sorted_messages), num_per_page):
         print("")
-        print("\n\n".join(sorted_messages[i:i+50]))
-        print(f"\nDisplaying messages {i+1} to {min(i+50, len(sorted_messages))} of {len(sorted_messages)}")
+        print("\n\n".join(sorted_messages[i:i+num_per_page]))
+        print(f"\nDisplaying messages {i+1} to {min(i+num_per_page, len(sorted_messages))} of {len(sorted_messages)}")
         print()
         choice = input("Type 'e' to exit. Enter to continue: ") 
         if choice == 'e':
