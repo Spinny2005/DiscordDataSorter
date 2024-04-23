@@ -451,11 +451,12 @@ def search_messages_unknown_servers_menu():
 
 def search_messages_unknown_servers(search_term):
     """ 
-        Searches through the messages folder for all messages sent from unknown servers containing search_term  
+    Searches through the messages folder for all messages sent from unknown servers containing search_term  
     """
     if not search_term:
         print("No search term entered")
         return []
+
     messages = []
 
     for channel_dir in os.listdir('package/messages'):
@@ -473,6 +474,7 @@ def search_messages_unknown_servers(search_term):
                                 server_name = ""
                                 date_time = message['Timestamp']
                                 content = message['Contents']
+
                                 if os.path.exists(os.path.join(channel_path, 'channel.json')):
                                     with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
                                         data = json.load(guild_file)
@@ -484,12 +486,12 @@ def search_messages_unknown_servers(search_term):
                                                 temp = channel_dir[1:]
                                                 if temp in index_data:
                                                     server_name = index_data[temp]
-                                if not server_name and search_term.lower() in content.lower():
+
+                                if server_name.split()[0] == "None" and search_term.lower() in content.lower():
                                     messages.append(f"{date_time} - {content}")
 
     messages.sort()
     return messages
-
 
 def display_all_unknown_messages():
     print("\n")
@@ -526,7 +528,7 @@ def display_all_unknown_messages():
                                                 temp = channel_dir[1:]
                                                 if temp in index_data:
                                                     server_name = index_data[temp]
-                                if not server_name:
+                                if server_name.split()[0] == "None":
                                     messages.append(f"{date_time} - {content}")
 
     messages.sort()
