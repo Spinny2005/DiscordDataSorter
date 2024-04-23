@@ -171,7 +171,7 @@ def get_servers():
 
 def get_server_invites():
     """
-        Returns a list of all invites the user has sent
+    Returns a list of all invites the user has sent
     """
     invites = set()
     for channel_dir in os.listdir('package/messages'):
@@ -179,32 +179,41 @@ def get_server_invites():
         if os.path.isdir(channel_path):
             for file_name in os.listdir(channel_path):
                 file_path = os.path.join(channel_path, file_name)
-                if file_name == 'messages.csv':
+                if file_name.endswith('.json'):  # Check for JSON files
                     with open(file_path, 'r', encoding='utf-8') as file:
-                        for line in file:
-                            invite_link = extract_invite_link(line)
-                            if is_valid_invite(invite_link):
-                                invites.add(invite_link)
+                        try:
+                            data = json.load(file)
+                            if isinstance(data, list):  # Ensure data is a list
+                                for message in data:
+                                    if isinstance(message, dict):  # Ensure message is a dictionary
+                                        invite_link = extract_invite_link(message.get('Contents', ''))
+                                        if is_valid_invite(invite_link):
+                                            invites.add(invite_link)
+                        except json.JSONDecodeError:
+                            print(f"Error decoding JSON in file: {file_path}")
+                            continue
     invites_list = list(invites)
     invites_list.sort()
     return invites_list
 
 
-def extract_invite_link(line):
+
+
+def extract_invite_link(contents):
     """ 
-        Extracts an invite link from a line of text
+        Extracts an invite link from message contents
     """
-    match = re.search(r'https?://(?:www\.)?(?:discord\.gg/[^\s,]+|discord\.com/invite/[^\s,]+)', line)
+    match = re.search(r'https?://(?:www\.)?(?:discord\.gg/[^\s,]+|discord\.com/invite/[^\s,]+)', contents)
     if match:
         return match.group(0).rstrip(',').rstrip('"')
     return None
-
 
 def is_valid_invite(invite_link):
     """ 
         Checks if an invite link is valid
     """
     return invite_link is not None
+
 
 
 def get_invite_codes():
@@ -284,8 +293,9 @@ def search_messages_menu():
     """
     print("\n")
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("Notes: \n - Searching for numbers also returns dates and times as well as message IDs. \n - Searching for non alphanumeric characters may return unexpected results. \n - Results with over 1000 messages may be truncated.\n\t(If you use VScode the max messages displayed is 330 cmd is 3330) \n - Some messages may be missing due to impropper csv formatting.\n\t(Blame discord, not me. I ain't trying to work around that shit) \n")
+    print("Notes: \n - Searching for numbers also returns dates and times as well as message IDs. \n - Searching for non alphanumeric characters may return unexpected results. \n - Results with over 1000 messages may be truncated.\n\t(If you use VScode the max messages displayed is 330 cmd is 3330) \n - Some messages may be missing due to impropper json formatting.\n\t(Blame discord, not me. I ain't trying to work around that shit) \n")
     search_term = input('Enter a search term: ')
+    print("Seaching. This may take a minute.")
     messages = search_messages(search_term)
     return messages
 
@@ -299,7 +309,6 @@ def search_messages(search_term):
         return []
     messages = []
 
-
     for channel_dir in os.listdir('package/messages'):
         channel_path = os.path.join('package/messages', channel_dir)
 
@@ -307,23 +316,14 @@ def search_messages(search_term):
             for file_name in os.listdir(channel_path):
                 file_path = os.path.join(channel_path, file_name)
 
-                if file_name == 'messages.csv':
+                if file_name.endswith('.json'):  # Check for JSON files
                     with open(file_path, 'r', encoding='utf-8') as file:
-                        for line in file:
-                            # Set up variables
-                            server_name = ""
-                            parts = ""
-                            date_time = ""
-                            message = ""
-
-                            # If the search term is in the line
-                            if search_term.lower() in line.lower():
-                                parts = line.strip().split(',', 2)
-                                if len(parts) >= 3 and len(parts[1].split()) >= 2:
-                                    date_time = f"\033[1;30m{parts[1].split()[0]} - {parts[1].split()[1][:8]}\033[0m"
-                                    message = parts[2].strip().rstrip(',')
-
-                                # Get the server name
+                        data = json.load(file)
+                        for message in data:
+                            if 'Contents' in message:
+                                server_name = ""
+                                date_time = message['Timestamp']
+                                content = message['Contents']
                                 if os.path.exists(os.path.join(channel_path, 'channel.json')):
                                     with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
                                         data = json.load(guild_file)
@@ -335,21 +335,14 @@ def search_messages(search_term):
                                                 temp = channel_dir[1:]
                                                 if temp in index_data:
                                                     server_name = index_data[temp]
-
-                                # Append the message along with the server_name
-                                if date_time != "" and message != "":
+                                if search_term.lower() in content.lower():
                                     if server_name:
-                                        # messages.append((parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"))
-                                        messages.append(("", f"\033[1;34mMessage sent in {server_name}\033[0m\n{date_time} - {message}"))
+                                        messages.append(f"\033[1;34mMessage sent in {server_name}\033[0m\n{date_time} - {content}")
                                     else:
-                                        # messages.append((parts[1], f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {message}"))
-                                        messages.append(("", f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {message}"))
+                                        messages.append(f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {content}")
 
-
-    #messages.sort(key=lambda x: x[0])
-    messages.sort(key=lambda x: x[1].split('\n')[1])
-    sorted_messages = [msg[1] for msg in messages]
-    return sorted_messages
+    messages.sort(key=lambda x: x.split('\n')[1])
+    return messages
 
 
 def total_messages():
@@ -362,22 +355,24 @@ def total_messages():
         if os.path.isdir(channel_path):
             for file_name in os.listdir(channel_path):
                 file_path = os.path.join(channel_path, file_name)
-                if file_name == 'messages.csv':
+                if file_name.endswith('.json'):  # Check for JSON files
                     with open(file_path, 'r', encoding='utf-8') as file:
-                        total += sum(1 for line in file)
+                        data = json.load(file)
+                        total += len(data)
     return total
+
 
 
 def display_all_messages():
     """ 
-        Exact same as search_messages_menu but there is no if statement to check if the search matches the search term
+        Displays all messages from all channels
     """
     print("\n")
     os.system('cls' if os.name == 'nt' else 'clear')
     
     messages = []
 
-    print(f"Compiling {total_messages()} messages...")
+    print(f"Compiling messages from all channels...")
     print("This may take a minute\n")
 
     for channel_dir in os.listdir('package/messages'):
@@ -387,44 +382,31 @@ def display_all_messages():
             for file_name in os.listdir(channel_path):
                 file_path = os.path.join(channel_path, file_name)
 
-                if file_name == 'messages.csv':
+                if file_name.endswith('.json'):  # Check for JSON files
                     with open(file_path, 'r', encoding='utf-8') as file:
-                        for line in file:
-                            # Set up variables
-                            server_name = ""
-                            parts = ""
-                            date_time = ""
-                            message = ""
-
-                            parts = line.strip().split(',', 2)
-                            if len(parts) >= 3 and len(parts[1].split()) >= 2:
-                                date_time = f"\033[1;30m{parts[1].split()[0]} - {parts[1].split()[1][:8]}\033[0m"
-                                message = parts[2].strip().rstrip(',')
-
-                            # Get the server name
-                            if os.path.exists(os.path.join(channel_path, 'channel.json')):
-                                with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
-                                    data = json.load(guild_file)
-                                    if data.get('guild'):
-                                        server_name = (f"{data['guild']['name']} in {data['name']}")
-                                    else:
-                                        with open('package/messages/index.json', 'r', encoding='utf-8') as index_file:
-                                            index_data = json.load(index_file)
-                                            temp = channel_dir[1:]
-                                            if temp in index_data:
-                                                server_name = index_data[temp]
-
-                            # Append the message along with the server_name
-                            if date_time != "" and message != "":
+                        data = json.load(file)
+                        for message in data:
+                            if 'Contents' in message:
+                                server_name = ""
+                                date_time = message['Timestamp']
+                                content = message['Contents']
+                                if os.path.exists(os.path.join(channel_path, 'channel.json')):
+                                    with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
+                                        data = json.load(guild_file)
+                                        if data.get('guild'):
+                                            server_name = (f"{data['guild']['name']} in {data['name']}")
+                                        else:
+                                            with open('package/messages/index.json', 'r', encoding='utf-8') as index_file:
+                                                index_data = json.load(index_file)
+                                                temp = channel_dir[1:]
+                                                if temp in index_data:
+                                                    server_name = index_data[temp]
                                 if server_name:
-                                    # messages.append((parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"))
-                                    messages.append(("", f"\033[1;34mMessage sent in {server_name}\033[0m\n{date_time} - {message}"))
+                                    messages.append(f"\033[1;34mMessage sent in {server_name}\033[0m\n{date_time} - {content}")
                                 else:
-                                    # messages.append((parts[1], f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {message}"))
-                                    messages.append(("", f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {message}"))
+                                    messages.append(f"\033[1;34mMessage sent in Unknown server\033[0m\n{date_time} - {content}")
 
-    messages.sort(key=lambda x: x[1].split('\n')[1])
-    sorted_messages = [msg[1] for msg in messages]
+    messages.sort(key=lambda x: x.split('\n')[1])
 
     num_per_page = None
     while not num_per_page:
@@ -436,24 +418,22 @@ def display_all_messages():
             print("Invalid input")
             num_per_page = None
         if num_per_page > 1000:
-            if num_per_page > len(sorted_messages) and len(sorted_messages) < 1000:
-                print(f"Max messages per page is {len(sorted_messages)}")
+            if num_per_page > len(messages) and len(messages) < 1000:
+                print(f"Max messages per page is {len(messages)}")
             else:
                 print("Max messages per page is 1000")
             num_per_page = None
-
-    # Then we print messages 100 at a time and prompt the user to continue
-    print("\n")
-    print(f"Found {len(sorted_messages)} messages sent by you")
-    print()
-    for i in range(0, len(sorted_messages), num_per_page):
-        print("\n\n".join(sorted_messages[i:i+num_per_page]))
-        print(f"\nDisplaying messages {i+1} to {min(i+num_per_page, len(sorted_messages))} of {len(sorted_messages)}")
+    
+    for i in range(0, len(messages), num_per_page):
+        print("")
+        print("\n\n".join(messages[i:i+num_per_page]))
+        print(f"\nDisplaying messages {i+1} to {min(i+num_per_page, len(messages))} of {len(messages)}")
         print()
         choice = input("Type 'e' to exit. Enter to continue: ") 
         if choice == 'e':
             break
         os.system('cls' if os.name == 'nt' else 'clear')
+
 
 
 def search_messages_unknown_servers_menu():
@@ -462,8 +442,9 @@ def search_messages_unknown_servers_menu():
     """
     print("\n")
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("Notes: \n - Searching for numbers also returns dates and times as well as message IDs. \n - Searching for non alphanumeric characters may return unexpected results. \n - Results with over 1000 messages may be truncated.\n\t(If you use VScode the max messages displayed is 330 cmd is 3330) \n - Some messages may be missing due to impropper csv formatting.\n\t(Blame discord, not me. I ain't trying to work around that) \n")
+    print("Notes: \n - Searching for numbers also returns dates and times as well as message IDs. \n - Searching for non alphanumeric characters may return unexpected results. \n - Results with over 1000 messages may be truncated.\n\t(If you use VScode the max messages displayed is 330 cmd is 3330) \n - Some messages may be missing due to impropper json formatting.\n\t(Blame discord, not me. I ain't trying to work around that) \n")
     search_term = input('Enter a search term: ')
+    print("Seaching. This may take a minute.")
     messages = search_messages_unknown_servers(search_term)
     return messages
 
@@ -484,23 +465,14 @@ def search_messages_unknown_servers(search_term):
             for file_name in os.listdir(channel_path):
                 file_path = os.path.join(channel_path, file_name)
 
-                if file_name == 'messages.csv':
+                if file_name.endswith('.json'):  # Check for JSON files
                     with open(file_path, 'r', encoding='utf-8') as file:
-                        for line in file:
-                            # Set up variables
-                            server_name = ""
-                            parts = ""
-                            date_time = ""
-                            message = ""
-
-                            # If the search term is in the line
-                            if search_term.lower() in line.lower():
-                                parts = line.strip().split(',', 2)
-                                if len(parts) >= 3 and len(parts[1].split()) >= 2:
-                                    date_time = f"\033[1;30m{parts[1].split()[0]} - {parts[1].split()[1][:8]}\033[0m"
-                                    message = parts[2].strip().rstrip(',')
-
-                                # Get the server name
+                        data = json.load(file)
+                        for message in data:
+                            if 'Contents' in message:
+                                server_name = ""
+                                date_time = message['Timestamp']
+                                content = message['Contents']
                                 if os.path.exists(os.path.join(channel_path, 'channel.json')):
                                     with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
                                         data = json.load(guild_file)
@@ -512,16 +484,11 @@ def search_messages_unknown_servers(search_term):
                                                 temp = channel_dir[1:]
                                                 if temp in index_data:
                                                     server_name = index_data[temp]
+                                if not server_name and search_term.lower() in content.lower():
+                                    messages.append(f"{date_time} - {content}")
 
-                                # Append the message along with the server_name
-                                if date_time != "" and message != "":
-                                    if not server_name:
-                                        # messages.append((parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"))
-                                        messages.append(("", f"{date_time} - {message}"))
-
-    messages.sort(key=lambda x: x[1])
-    sorted_messages = [msg[1] for msg in messages]
-    return sorted_messages
+    messages.sort()
+    return messages
 
 
 def display_all_unknown_messages():
@@ -540,48 +507,30 @@ def display_all_unknown_messages():
             for file_name in os.listdir(channel_path):
                 file_path = os.path.join(channel_path, file_name)
 
-                if file_name == 'messages.csv':
+                if file_name.endswith('.json'):  # Check for JSON files
                     with open(file_path, 'r', encoding='utf-8') as file:
-                        for line in file:
-                            # Set up variables
-                            server_name = ""
-                            parts = ""
-                            date_time = ""
-                            message = ""
-
-                            parts = line.strip().split(',', 2)
-                            if len(parts) >= 3 and len(parts[1].split()) >= 2:
-                                date_time = f"\033[1;30m{parts[1].split()[0]} - {parts[1].split()[1][:8]}\033[0m"
-                                message = parts[2].strip().rstrip(',')
-
-                            # Get the server name
-                            if os.path.exists(os.path.join(channel_path, 'channel.json')):
-                                with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
-                                    data = json.load(guild_file)
-                                    if data.get('guild'):
-                                        server_name = (f"{data['guild']['name']} in {data['name']}")
-                                    else:
-                                        with open('package/messages/index.json', 'r', encoding='utf-8') as index_file:
-                                            index_data = json.load(index_file)
-                                            temp = channel_dir[1:]
-                                            if temp in index_data:
-                                                server_name = index_data[temp]
-
-                            # Append the message along with the server_name
-                            if date_time != "" and message != "":
+                        data = json.load(file)
+                        for message in data:
+                            if 'Contents' in message:
+                                server_name = ""
+                                date_time = message['Timestamp']
+                                content = message['Contents']
+                                if os.path.exists(os.path.join(channel_path, 'channel.json')):
+                                    with open(os.path.join(channel_path, 'channel.json'), 'r', encoding='utf-8') as guild_file:
+                                        data = json.load(guild_file)
+                                        if data.get('guild'):
+                                            server_name = (f"{data['guild']['name']} in {data['name']}")
+                                        else:
+                                            with open('package/messages/index.json', 'r', encoding='utf-8') as index_file:
+                                                index_data = json.load(index_file)
+                                                temp = channel_dir[1:]
+                                                if temp in index_data:
+                                                    server_name = index_data[temp]
                                 if not server_name:
-                                    # messages.append((parts[1], f"\033[1;34m{server_name}\033[0m\n{date_time} - {message}"))
-                                    messages.append(("", f"{date_time} - {message}"))
+                                    messages.append(f"{date_time} - {content}")
 
-    messages.sort(key=lambda x: x[1])
-    #messages.sort(key=lambda x: x[1].split('\n')[1])
-    sorted_messages = [msg[1] for msg in messages]
-
-    # Then we print messages 100 at a time and prompt the user to continue
-    print("\n")
-    print(f"Found {len(sorted_messages)} messages sent by you in unknown servers")
-    print()
-
+    messages.sort()
+    
     num_per_page = None
     while not num_per_page:
         try:
@@ -592,21 +541,22 @@ def display_all_unknown_messages():
             print("Invalid input")
             num_per_page = None
         if num_per_page > 1000:
-            if num_per_page > len(sorted_messages) and len(sorted_messages) < 1000:
-                print(f"Max messages per page is {len(sorted_messages)}")
+            if num_per_page > len(messages) and len(messages) < 1000:
+                print(f"Max messages per page is {len(messages)}")
             else:
                 print("Max messages per page is 1000")
             num_per_page = None
     
-    for i in range(0, len(sorted_messages), num_per_page):
-        print("")
-        print("\n\n".join(sorted_messages[i:i+num_per_page]))
-        print(f"\nDisplaying messages {i+1} to {min(i+num_per_page, len(sorted_messages))} of {len(sorted_messages)}")
-        print()
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(f"\nFound {len(messages)} messages sent by you in unknown servers\n")
+    for i in range(0, len(messages), num_per_page):
+        print("\n\n".join(messages[i:i+num_per_page]))
+        print(f"\nDisplaying messages {i+1} to {min(i+num_per_page, len(messages))} of {len(messages)}\n")
         choice = input("Type 'e' to exit. Enter to continue: ") 
         if choice == 'e':
             break
         os.system('cls' if os.name == 'nt' else 'clear')
+
 
 
 if __name__ == '__main__':
